@@ -1,0 +1,15 @@
+<viande>: "steak" "langue de boeuf" "bavette" "beefsteal" "poulet" "cuisse de poulet" "dinde" "cote de porc" "jambon" "saucisson" "jambon sec" "veau" "chipolata" "merguez" "saucisse" "brochette",
+
+<fromage>: "camembert" "brie" "caprice des dieux" "chevre" "chevre frai" "mozarella" "burrata" "feta" "parmesan" "conte" "mimolette" "gouda" "fromage à raclette" "fromage rape" "kiri" "babibelle" "fromage blanc" "fromage frai",
+
+<noms>: "Jean Marc" "Paul Alexandre" "Fred Glodux" "Anne boustifaille",
+
+<rayon>: {
+	vendeur: "<name:noms>",
+	contenu: "<name:viande;repeat:3;id:stuff>",
+	contenu: "<name:fromage;repeat:3;id:stuff>"
+},
+
+magasin: {
+	rayon: "<name:rayon;repeat:1:3>"
+}
