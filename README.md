@@ -2,7 +2,7 @@
 ## FR
 Une super bibliothèque pour charger et sauvegarder des données depuis des fichiers dans des formats variés.
 ### SimiliJSON
-```yaml
+```perl
 shop: {
 	shelf: {
 		vendeur: "Jean Marc",
@@ -12,7 +12,7 @@ shop: {
 ```
 Plusieurs modificateurs à utiliser sur les données chargées permettent d'ajouter des fonctionnalités à la syntaxe. Comme des fonctionnalités de génération aléatoire.
 ### Génération aléatoire
-```yaml
+```perl
 <viande>: "steak" "langue de boeuf" "bavette" "beefsteal" "poulet" "cuisse de poulet" "dinde" "cote de porc" "jambon" "saucisson" "jambon sec" "veau" "chipolata" "merguez" "saucisse" "brochette",
 <fromage>: "camembert" "brie" "caprice des dieux" "chevre" "chevre frai" "mozarella" "burrata" "feta" "parmesan" "conte" "mimolette" "gouda" "fromage à raclette" "fromage rape" "kiri" "babibelle" "fromage blanc" "fromage frai",
 <noms>: "Jean Marc" "Paul Alexandre" "Fred Glodux" "Anne boustifaille",
@@ -26,7 +26,7 @@ magasin: {
 }
 ```
 Résultat:
-```yaml
+```perl
 "magasin": {
   "rayon": {
 	 "vendeur": "Jean Marc",
@@ -62,7 +62,7 @@ public class ColorPBucket implements PaintBucket {
 	private ColorPBucket() { }
 }
 ```
-```yaml
+```perl
 "plain_red":{
 	type: ColorPBucket,
 	color: #ff0000
