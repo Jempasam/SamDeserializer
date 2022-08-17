@@ -1,6 +1,8 @@
 package jempasam.data.modifier;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +76,7 @@ public class TemplateDataModifier implements DataModifier{
 		List<DataChunk> templates=getTemplateList(name);
 		if(templates.size()==0) {
 			logger.info("Template \""+name+"\" don't exist.");
-			return List.of();
+			return Collections.emptyList();
 		}
 		else {
 			List<DataChunk> ret=new ArrayList<>();

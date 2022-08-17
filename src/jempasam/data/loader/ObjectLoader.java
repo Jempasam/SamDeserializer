@@ -4,5 +4,5 @@ import jempasam.data.chunk.ObjectChunk;
 import jempasam.objectmanager.ObjectManager;
 
 public interface ObjectLoader<T> {
-	void load(ObjectManager<T> manager, ObjectChunk data);
+	void load(ObjectManager<? super T> manager, ObjectChunk data);
 }

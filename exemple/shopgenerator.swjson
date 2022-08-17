@@ -2,12 +2,12 @@
 
 <fromage>: "camembert" "brie" "caprice des dieux" "chevre" "chevre frai" "mozarella" "burrata" "feta" "parmesan" "conte" "mimolette" "gouda" "fromage à raclette" "fromage rape" "kiri" "babibelle" "fromage blanc" "fromage frai",
 
-<noms>: "Jean Marc" "Paul Alexandre" "Fred Glodux" "Anne boustifaille",
+<noms>: "Jean Marc@0@" "Pal Alexandre@0@" "Fred Glodux@0@" "Anne boustifaille@0@",
 
 <rayon>: {
-	vendeur: "<name:noms>",
-	contenu: "<name:viande;repeat:3;id:stuff>",
-	contenu: "<name:fromage;repeat:3;id:stuff>"
+	vendeur: "<name:noms;vars: le Grand>",
+	contenu: "<name:viande;repeat:3;group:stuff>",
+	contenu: "<name:fromage;repeat:3;group:stuff>"
 },
 
 magasin: {

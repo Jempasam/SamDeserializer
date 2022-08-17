@@ -3,7 +3,7 @@ package jempasam.data.chunk;
 import java.util.ArrayList;
 import java.util.List;
 
-import jempasam.samstream.collectors.Collectors;
+import jempasam.samstream.collectors.SamCollectors;
 
 public class SimpleObjectChunk extends AbstractDataChunk implements ObjectChunk {
 	
@@ -63,7 +63,7 @@ public class SimpleObjectChunk extends AbstractDataChunk implements ObjectChunk 
 	@Override
 	public String toString() {
 		StringBuilder sb=new StringBuilder();
-		sb.append("\"").append(getName()).append("\":(").append(childStream().map(Object::toString).collect(Collectors.concatenate(","))).append(")");
+		sb.append("\"").append(getName()).append("\":(").append(childStream().map(Object::toString).collect(SamCollectors.concatenate(","))).append(")");
 		return sb.toString();
 	}
 	

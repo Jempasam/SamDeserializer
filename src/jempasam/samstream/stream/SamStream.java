@@ -1,15 +1,25 @@
 package jempasam.samstream.stream;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
+
 import jempasam.samstream.collectors.SamCollector;
 
 public interface SamStream<T> extends BaseSamStream<T>{
@@ -28,12 +38,49 @@ public interface SamStream<T> extends BaseSamStream<T>{
 		return new Map2SStream<>(this,mapper);
 	}
 	
+	default <O> SamStream<O> reduced(Supplier<? extends O> factory, Predicate<? super T> doCreate, BiFunction<? super O,? super  T,? extends O> reducer){
+		return new ReduceSStream<>(this, factory, doCreate, reducer);
+	}
+	
+	default <O> SamStream<O> reduced(Supplier<O> factory, Predicate<T> doCreate, BiConsumer<O, T> reducer){
+		return new ReduceSStream<>(this, factory, doCreate, (out,value)->{reducer.accept(out, value); return out;});
+	}
+	
 	default SamStream<Numerated<T>> numerate(){
-		return new Map2SStream<>(this,(number,value)->new Numerated<>(number, value));
+		return new Map2SStream<>(this,Numerated::new);
 	}
 	
 	default <O> SamStream<O> flatMap(Function<T, SamStream<O>> mapper){
 		return new FlattenSStream<>(new MapSStream<>(this, mapper));
+	}
+	
+	default SamStream<T> then(Collection<SamStream<T>> collection){
+		List<SamStream<T>> list=new ArrayList<>();
+		list.add(this);
+		list.addAll(collection);
+		return new CombineSStream<>(list);
+	}
+	
+	default SamStream<T> then(SamStream<T> stream){
+		List<SamStream<T>> list=new ArrayList<>();
+		list.add(this);
+		list.add(stream);
+		return new CombineSStream<>(list);
+	}
+	
+	default SamStream<T> after(Collection<SamStream<T>> collection){
+		List<SamStream<T>> list=new ArrayList<>();
+		list.addAll(collection);
+		list.add(this);
+		return new CombineSStream<>(list);
+	}
+	
+	@SuppressWarnings("unchecked")
+	default SamStream<T> after(SamStream<T> ...collection){
+		List<SamStream<T>> list=new ArrayList<>();
+		Collections.addAll(list, collection);
+		list.add(this);
+		return new CombineSStream<>(list);
 	}
 	
 	
@@ -54,6 +101,10 @@ public interface SamStream<T> extends BaseSamStream<T>{
 		return new FilterSStream<>(this, test);
 	}
 	
+	default SamStream<T> notNull(){
+		return new FilterSStream<>(this, Objects::nonNull);
+	}
+	
 	default SamStream<T> filter(BiPredicate<Integer,T> test){
 		return new Filter2SStream<>(this, test);
 	}
@@ -68,7 +119,7 @@ public interface SamStream<T> extends BaseSamStream<T>{
 	
 	
 	// Action
-	default void forEachRemaining(Consumer<T> action) {
+	default void forEachRemaining(Consumer<? super T> action) {
 		T value;
 		do {
 			value=tryNext();
@@ -82,6 +133,35 @@ public interface SamStream<T> extends BaseSamStream<T>{
 		forEachRemaining(action);
 	}
 	
+	default boolean ifOne(Predicate<T> test) {
+		reset();
+		T value=tryNext();
+		while(hasSucceed()) {
+			if(test.test(value))return true;
+			value=tryNext();
+		}
+		return false;
+	}
+	
+	default boolean ifAll(Predicate<T> test) {
+		reset();
+		T value=tryNext();
+		while(hasSucceed()) {
+			if(!test.test(value))return false;
+			value=tryNext();
+		}
+		return true;
+	}
+	
+	default int count(Predicate<T> test) {
+		reset();
+		AtomicInteger count=new AtomicInteger(0);
+		forEach(value->{
+			if(test.test(value))count.incrementAndGet();
+		});
+		return count.get();
+	}
+	
 	default void forEachRemaining(BiConsumer<SamStream<T>,T> action) {
 		T value;
 		do {
@@ -91,21 +171,46 @@ public interface SamStream<T> extends BaseSamStream<T>{
 		}while(true);
 	}
 	
-	default void forEach(Consumer<T> action) {
+	default void forEach(Consumer<? super T> action) {
 		reset();
 		forEachRemaining(action);
 	}
 	
 	default <M,O> O collectRemaining(SamCollector<T, M, O> collector) {
-		forEachRemaining(input -> {
-			collector.give(input);
-		});
+		forEachRemaining(collector::give);
 		return collector.getResult();
 	}
 	
 	default <M,O> O collect(SamCollector<T, M, O> collector) {
 		reset();
 		return collectRemaining(collector);
+	}
+	
+	default <M,O> O collect(Collector<T, M, O> collector) {
+		reset();
+		M container=collector.supplier().get();
+		forEachRemaining( input -> collector.accumulator().accept(container, input) );
+		return collector.finisher().apply(container);
+	}
+	
+	default <O> O reduce(O from, BiFunction<O, T, O> action){
+		T value;
+		do {
+			value=tryNext();
+			if(hasSucceed()) {
+				from=action.apply(from, value);
+			}
+			else break;
+		}while(true);
+		return from;
+	}
+	
+	default String asString() {
+		StringBuilder sb=new StringBuilder();
+		sb.append("[");
+		forEach(val->sb.append(val.toString()).append(","));
+		sb.append("]");
+		return sb.toString();
 	}
 	
 	default Optional<T> next(){
@@ -119,18 +224,17 @@ public interface SamStream<T> extends BaseSamStream<T>{
 	}
 	
 	default Optional<T> last(){
+		reset();
 		T ret=tryNext();
-		T next=tryNext();
 		if(!hasSucceed()) {
-			reset();
-			ret=tryNext();
-			if(!hasSucceed())return Optional.empty();
+			return Optional.empty();
 		}
+		T next=tryNext();
 		while(hasSucceed()) {
 			ret=next;
 			next=tryNext();
 		}
-		return Optional.of(next);
+		return Optional.of(ret);
 	}
 	
 	default SamStream<T> parallel(){
@@ -143,12 +247,12 @@ public interface SamStream<T> extends BaseSamStream<T>{
 	
 	
 	
-abstract static class DecoratorSStream<I,O> implements SamStream<O>{	
+	abstract static class DecoratorSStream<I,O> implements SamStream<O>{	
 		
 		SamStream<I> input;
 		
 		
-		public DecoratorSStream(SamStream<I> input) {
+		DecoratorSStream(SamStream<I> input) {
 			super();
 			this.input = input;
 		}
@@ -165,11 +269,12 @@ abstract static class DecoratorSStream<I,O> implements SamStream<O>{
 
 	abstract static class SameDecoratorSStream<T> extends DecoratorSStream<T,T>{	
 		
-		public SameDecoratorSStream(SamStream<T> input) {
+		SameDecoratorSStream(SamStream<T> input) {
 			super(input);
 			this.input = input;
 		}
 		
+		@Override
 		public boolean hasSucceed() {
 			return input.hasSucceed();
 		}
@@ -200,6 +305,51 @@ abstract static class DecoratorSStream<I,O> implements SamStream<O>{
 			return input.hasSucceed() ? mapper.apply(ret) : null;
 		}
 	}
+
+	static class ReduceSStream<I,O> extends DecoratorSStream<I,O>{	
+		
+		private Supplier<? extends O> factory;
+		private Predicate<? super I> doCreate;
+		private BiFunction<? super O,? super  I,? extends O> reducer;
+		private O reduced;
+		
+		public ReduceSStream(SamStream<I> input, Supplier<? extends O> factory, Predicate<? super I> doCreate, BiFunction<? super O,? super  I,? extends O> reducer) {
+			super(input);
+			this.factory=factory;
+			this.doCreate=doCreate;
+			this.reducer=reducer;
+			reduced=factory.get();
+		}
+		
+		@Override
+		public O tryNext() {
+			I value;
+			do {
+				value=input.tryNext();
+				if(input.hasSucceed()) {
+					if(doCreate.test(value)&&reduced!=null) {
+						O ret=reduced;
+						reduced=reducer.apply(factory.get(), value);
+						return ret;
+					}
+					else{
+						if(reduced==null)reduced=factory.get();
+						reduced=reducer.apply(reduced, value);
+					}
+				}
+				else break;
+			}while(true);
+			O ret=reduced;
+			reduced=factory.get();
+			return ret;
+		}
+		
+		@Override
+		public void reset() {
+			super.reset();
+			reduced=null;
+		}
+	}
 	
 	static class FlattenSStream<I> extends DecoratorSStream<SamStream<I>,I>{	
 		
@@ -208,6 +358,7 @@ abstract static class DecoratorSStream<I,O> implements SamStream<O>{
 		public FlattenSStream(SamStream<SamStream<I>> input) {
 			super(input);
 			this.stream=input.tryNext();
+			this.stream.reset();
 		}
 		
 		@Override
@@ -216,9 +367,61 @@ abstract static class DecoratorSStream<I,O> implements SamStream<O>{
 			while(!stream.hasSucceed()) {
 				stream=input.tryNext();
 				if(!input.hasSucceed())return null;
+				stream.reset();
 				ret=stream.tryNext();
 			}
 			return ret;
+		}
+		
+		@Override
+		public void reset() {
+			super.reset();
+			this.stream=input.tryNext();
+			this.stream.reset();
+		}
+	}
+
+	static class CombineSStream<I> implements SamStream<I>{	
+		
+		private List<SamStream<I>> parts;
+		private int index;
+		
+		public CombineSStream(List<SamStream<I>> parts) {
+			this.parts=parts;
+			index=0;
+			parts.get(0).reset();
+		}
+		
+		@Override
+		public I tryNext() {
+			if(index>=parts.size())return null;
+			SamStream<I> stream;
+			I next;
+			stream=parts.get(index);
+			next=stream.tryNext();
+			if(stream.hasSucceed())return next;
+			else{
+				do {
+					index++;
+					if(index>=parts.size())return null;
+					stream=parts.get(index);
+					stream.reset();
+					next=stream.tryNext();
+				}while(!stream.hasSucceed());
+				return next;
+			}
+		}
+		
+		@Override
+		public boolean hasSucceed() {
+			return index<parts.size();
+		}
+		
+		
+		@Override
+		public void reset() {
+			index=0;
+			parts.get(0).reset();
 		}
 	}
 	
@@ -278,7 +481,8 @@ abstract static class DecoratorSStream<I,O> implements SamStream<O>{
 			boolean succeed;
 			do {
 				ret=input.tryNext();
-			} while((succeed=input.hasSucceed()) && !tester.test(ret));
+				succeed=input.hasSucceed();
+			} while(succeed && !tester.test(ret));
 			if(succeed)return ret;
 			else return null;
 		}
@@ -302,7 +506,8 @@ abstract static class DecoratorSStream<I,O> implements SamStream<O>{
 			do {
 				ret=input.tryNext();
 				counter++;
-			} while((succeed=input.hasSucceed()) && !tester.test(counter,ret));
+				succeed=input.hasSucceed();
+			} while(succeed && !tester.test(counter,ret));
 			if(succeed)return ret;
 			else return null;
 		}
@@ -327,14 +532,13 @@ abstract static class DecoratorSStream<I,O> implements SamStream<O>{
 		
 		@Override
 		public I tryNext() {
-			max--;
-			return input.tryNext();
+			counter++;
+			return hasSucceed() ? input.tryNext() : null;
 		}
 		
 		@Override
 		public boolean hasSucceed() {
-			counter++;
-			return counter>=max && input.hasSucceed();
+			return counter<=max && input.hasSucceed();
 		}
 		
 		@Override
@@ -359,7 +563,8 @@ abstract static class DecoratorSStream<I,O> implements SamStream<O>{
 			boolean succeed;
 			do {
 				ret=input.tryNext();
-			} while((succeed=input.hasSucceed()) && !set.contains(ret));
+				succeed=input.hasSucceed();
+			} while(succeed && !set.contains(ret));
 			if(succeed) {
 				set.add(ret);
 				return ret;
@@ -432,6 +637,11 @@ abstract static class DecoratorSStream<I,O> implements SamStream<O>{
 			return number;
 		}
 		
+		@Override
+		public String toString() {
+			return number+": "+value;
+		}
+		
 		
 	}
 	
@@ -449,6 +659,7 @@ abstract static class DecoratorSStream<I,O> implements SamStream<O>{
 		
 		@Override
 		public T next() {
+			if(!input.hasSucceed())throw new NoSuchElementException();
 			actual=next;
 			next=input.tryNext();
 			return actual;

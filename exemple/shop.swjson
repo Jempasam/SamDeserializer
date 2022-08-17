@@ -1,0 +1,10 @@
+shop: {
+	shelf: {
+		vendeur: "Jean Marc",
+		contenu: "steak" "merguez" "chicken"
+	},
+	shelf: {
+		vendeur: "Jeanne Pierre",
+		contenu: "camembert" "gouda" "mimolette" "parmesan" "gruyere"
+	}
+}

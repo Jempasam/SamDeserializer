@@ -11,7 +11,9 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntPredicate;
 import java.util.function.IntSupplier;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 
@@ -115,9 +117,9 @@ public class PlacerDataModifier implements DataModifier{
 			this.random=new Random();
 		}
 		
-		public <T> T getParameter(String name, Set<Integer> sizes, Function<String[], T> func, Supplier<T> def){
+		public <T> T getParameter(String name, IntPredicate sizepredicate, Function<String[], T> func, Supplier<T> def){
 			String[] param=parameters.get(name);
-			if(param!=null && sizes.contains(param.length)) {
+			if(param!=null && sizepredicate.test(param.length)) {
 				parameters.remove(name);
 				return func.apply(param);
 			}
@@ -125,7 +127,7 @@ public class PlacerDataModifier implements DataModifier{
 		}
 		
 		public int getIntParameter(String name,  IntSupplier def){
-			String[] ret=this.<String[]>getParameter(name, Set.of(1,2), strs->strs, ()->null);
+			String[] ret=this.<String[]>getParameter(name, size->size==1||size==2, strs->strs, ()->null);
 			if(ret==null)return def.getAsInt();
 			else {
 				if(ret.length==1)return Integer.parseInt(ret[0]);
@@ -137,14 +139,18 @@ public class PlacerDataModifier implements DataModifier{
 			}
 		}
 		
+		public String[] getStringArrayParameter(String name,  Supplier<String[]> def){
+			return this.<String[]>getParameter(name, n->n>=1, strs->strs, def);
+		}
+		
 		public String getStringParameter(String name,  Supplier<String> def){
-			return this.<String>getParameter(name, Set.of(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20), strs->strs[random.nextInt(strs.length)], def);
+			return this.<String>getParameter(name, n->n>=1, strs->strs[random.nextInt(strs.length)], def);
 		}
 		
 		public boolean getBooleanParameter(String name,  Supplier<Boolean> def){
 			return this.<Boolean>getParameter(
 				name,
-				Set.of(1),
+				n->n==1,
 				strs->{
 					try {
 						return Float.parseFloat(strs[0])>=random.nextFloat();

@@ -2,8 +2,11 @@ package jempasam.data.chunk.stream;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Map;
+
 import jempasam.data.chunk.DataChunk;
 import jempasam.data.chunk.ObjectChunk;
+import jempasam.samstream.stream.SamStream;
 
 public class RecursiveChunkStream implements DataChunkStream<DataChunk>{
 	
@@ -65,7 +68,7 @@ public class RecursiveChunkStream implements DataChunkStream<DataChunk>{
 	}
 	
 	public ObjectChunk[] actualPath() {
-		return targStack.toArray(size->new ObjectChunk[size]);
+		return targStack.toArray(new ObjectChunk[targStack.size()]);
 	}
 	
 	public ObjectChunk actualParent() {

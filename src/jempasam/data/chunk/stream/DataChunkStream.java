@@ -41,4 +41,27 @@ public interface DataChunkStream<T extends DataChunk> extends SamStream<T>{
 			if(number>0)datachunk.setName(datachunk.getName()+Integer.toString(number+1));
 		});
 	}
+	
+	default SamStream<ChildParentPair> mapToParent(){
+		return map(dc->new ChildParentPair(this.actualParent(), dc));
+	}
+	
+	
+	
+	public static class ChildParentPair{
+		private ObjectChunk parent;
+		private DataChunk child;
+		public ChildParentPair(ObjectChunk parent, DataChunk child) {
+			super();
+			this.parent = parent;
+			this.child = child;
+		}
+		public ObjectChunk getParent() {
+			return parent;
+		}
+		public DataChunk getChild() {
+			return child;
+		}
+		
+	}
 }

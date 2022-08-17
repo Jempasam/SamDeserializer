@@ -27,7 +27,7 @@ public class ParallelSamStream<T> implements SamStream<T>{
 	
 	// Action
 	@Override
-	public void forEachRemaining(Consumer<T> action) {
+	public void forEachRemaining(Consumer<? super T> action) {
 		decorated.forEachRemaining(element->{
 			executor.submit(()->action.accept(element));
 		});
@@ -37,7 +37,7 @@ public class ParallelSamStream<T> implements SamStream<T>{
 	}
 	
 	@Override
-	public void forEach(Consumer<T> action) {
+	public void forEach(Consumer<? super T> action) {
 		decorated.reset();
 		forEachRemaining(action);
 	}

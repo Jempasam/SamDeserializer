@@ -1,0 +1,13 @@
+
+"jean": {
+	name: "Jean Marc",
+	age: 18
+},
+"pierre": {
+	name: "Pierre Frederic",
+	age: 25
+},
+"paul": {
+	name: "Paul Alexandre",
+	age: 12
+}

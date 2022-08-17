@@ -2,9 +2,11 @@ package jempasam.data.loader;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.InvalidParameterException;
+import java.util.Arrays;
 
 import jempasam.converting.ValueParser;
 import jempasam.data.chunk.DataChunk;
@@ -15,6 +17,7 @@ import jempasam.data.loader.tags.LoadableParameter;
 import jempasam.logger.SLogger;
 import jempasam.objectmanager.ObjectManager;
 import jempasam.reflection.ReflectionUtils;
+import jempasam.samstream.SamStreams;
 
 public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 	
@@ -39,7 +42,7 @@ public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 	
 	
 	@Override
-	public void load(ObjectManager<T> manager, ObjectChunk data) {
+	public void load(ObjectManager<? super T> manager, ObjectChunk data) {
 		for(DataChunk d : data) {
 			logger.enter(data.getName());
 			if(d instanceof ObjectChunk) {
@@ -83,10 +86,10 @@ public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 			objectclass=getType(data, rootclass);
 			
 			//Instantiate the object
-			Constructor<?> constructor=objectclass.getDeclaredConstructor();
-			constructor.setAccessible(true);
-			newobject=constructor.newInstance();
-			constructor.setAccessible(false);
+			newobject=createObjectEmpty(objectclass, data);
+			if(newobject==null) {
+				return null;
+			}
 			
 			//Load parameters
 			for(DataChunk d : data) {
@@ -113,8 +116,6 @@ public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 			}
 		} catch (ClassNotFoundException e) {
 			logger.info(e.getMessage());
-		} catch(NoSuchMethodException | InstantiationException e) {
-			logger.info("The type \""+classname+"\" is not instantiable");
 		} catch (Exception e) {
 			logger.info("Unexpexted error of type \""+e.getClass().getName()+"\"");
 			e.printStackTrace();
@@ -134,6 +135,34 @@ public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 		}catch(Exception e) {}
 		
 		return newobject;
+	}
+	
+	private Object createObjectEmpty(Class<?> clazz, ObjectChunk data){
+		for(Constructor<?> constructor : clazz.getDeclaredConstructors()) {
+			if(constructor.isAnnotationPresent(LoadableParameter.class)) {
+				String[] names=constructor.getAnnotation(LoadableParameter.class).paramnames();
+				if(constructor.getParameterCount()!=names.length)logger.error("Bad parameter name count of constructor of "+clazz.getSimpleName());
+				Object args[]=new Object[names.length];
+				for(int i=0; i<names.length; i++) {
+					DataChunk dataparam=data.get(names[i]);
+					if(dataparam==null)break;
+					Object value=getValue(dataparam, constructor.getParameters()[i].getType());
+					if(value==null)break;
+					args[i]=value;
+				}
+				try {
+					constructor.setAccessible(true);
+					Object newobject=constructor.newInstance(args);
+					constructor.setAccessible(false);
+					return newobject;
+				}catch (InstantiationError | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					logger.error("Instantiation error "+e.getClass().getSimpleName());
+					return null;
+				}
+			}
+		}
+		logger.error("Miss parameter for constructor of constructor not found. The object cannot be instantiated.");
+		return null;
 	}
 	
 	private Object getValue(DataChunk datachunk, Class<?> type){

@@ -3,16 +3,16 @@ package jempasam.samstream.collectors;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Collectors {
+public class SamCollectors {
 	
 	
 	
-	private Collectors() {}
+	private SamCollectors() {}
 	
 	
 	
 	public static <T> SamCollector<T, List<T>, List<T>> toList(){
-		return new SamCollector<>() {
+		return new SamCollector<T, List<T>, List<T>>() {
 			
 			private int count=0;
 			private List<T> list=new ArrayList<>();
@@ -41,7 +41,7 @@ public class Collectors {
 	}
 	
 	public static SamCollector<String, StringBuilder, String> concatenate(String separator){
-		return new SamCollector<>() {
+		return new SamCollector<String, StringBuilder, String>() {
 			
 			private StringBuilder sb=new StringBuilder();
 			private int count;
@@ -71,7 +71,7 @@ public class Collectors {
 	}
 	
 	public static <T> SamCollector<Number, Number, Number>  summing(){
-		return new SamCollector<>() {
+		return new SamCollector<Number, Number, Number>() {
 			
 			private long num=0;
 			private int count;

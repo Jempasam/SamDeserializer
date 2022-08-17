@@ -136,35 +136,4 @@ public class InputStreamSimpleTokenizer implements Tokenizer{
 		}
 		return nextword!=null;
 	}
-	
-	public static void main(String[] args) {
-		InputStream inputstream=new ByteArrayInputStream("""
-				a# ANIMAL a#
-				@@animal-have_@0@_near:{
-					type: SimpleWAssertion,
-					representation: "have a living @0@ near"
-				},
-				@@animal-have_@0@_skin:{
-					type: SimpleWAssertion,
-					representation: "have some @0@ skin"
-				},
-				have_skin:{
-					type: SimpleWAssertion,
-					representation: "have some skin"
-				},
-				
-				@@animal-have_@0@_bone:{
-					type: Sim
-				""".getBytes());
-		InputStreamSimpleTokenizer token=new InputStreamSimpleTokenizer(inputstream, " \t\n\r", "+", "\"'");
-		token.setComment("#");
-		while(token.hasNext()) {
-			System.out.println(token.next()+";"+token.hasNext());
-			try {
-				Thread.sleep(10);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-	}
 }
