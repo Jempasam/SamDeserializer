@@ -26,7 +26,14 @@ public class Test {
 		return name+" "+age+" ans";
 	}
 	
+	public static void test(int num) {
+		System.out.println(num+" : "+(num*16)+", "+(num<<4));
+	}
 	public static void main(String[] args) {
-		
+		test(0);
+		test(1);
+		test(2);
+		test(-1);
+		test(-2000000000);
 	}
 }
