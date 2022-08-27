@@ -10,8 +10,7 @@ import jempasam.data.chunk.ObjectChunk;
 import jempasam.data.chunk.SimpleObjectChunk;
 import jempasam.data.chunk.value.StringChunk;
 import jempasam.logger.SLogger;
-import jempasam.textanalyzis.reader.IteratorBufferedReader;
-import jempasam.textanalyzis.tokenizer.Tokenizer;
+import jempasam.samstream.stream.SamStream;
 
 public class StrobjoDataDeserializer extends AbstractDataDeserializer{
 	
@@ -34,7 +33,7 @@ public class StrobjoDataDeserializer extends AbstractDataDeserializer{
 	
 	
 	
-	public StrobjoDataDeserializer(Function<InputStream, Tokenizer> tokenizerSupplier, SLogger logger) {
+	public StrobjoDataDeserializer(Function<InputStream, SamStream<String>> tokenizerSupplier, SLogger logger) {
 		super(logger,tokenizerSupplier);
 	}
 		
@@ -42,13 +41,13 @@ public class StrobjoDataDeserializer extends AbstractDataDeserializer{
 	
 	@Override
 	public ObjectChunk loadFrom(InputStream input) {
-		ObjectChunk ret=loadChunk(new IteratorBufferedReader<String>(tokenizerSupplier.apply(input),new String[5]));
+		ObjectChunk ret=loadChunk(tokenizerSupplier.apply(input).buffered(5));
 		ret.setName("root");
 		return ret;
 	}
 	
-	private ObjectChunk loadChunk(IteratorBufferedReader<String> tokenizer) {
-		logger.enter("new Object");
+	private ObjectChunk loadChunk(SamStream.BufferedSStream<String> tokenizer) {
+		logger.enter().debug("new Object");
 		ObjectChunk newchunk=new SimpleObjectChunk(null);
 		
 		String token;
@@ -60,13 +59,13 @@ public class StrobjoDataDeserializer extends AbstractDataDeserializer{
 		int i=1;
 		//Load names of parameter and their values
 		while(!endofobject) {
-			logger.enter("Parameter "+i);
+			logger.enter().debug("In Parameter "+i+":");
 			
 			endofparameter=false;
 			
 			//LOAD NAMES
 			while(true) {
-				token=tokenizer.next();
+				token=tokenizer.tryNext();
 				//CLOSE OBJECT
 				if(token==null || token.equals(closeToken)) {
 					endofobject=true;
@@ -89,7 +88,7 @@ public class StrobjoDataDeserializer extends AbstractDataDeserializer{
 			//LOAD VALUES
 			if(!endofobject && !endofparameter)
 			while(true) {
-				token=tokenizer.next();
+				token=tokenizer.tryNext();
 				//CLOSE OBJECT
 				if(token==null || token.equals(closeToken)) {
 					endofobject=true;
@@ -99,7 +98,7 @@ public class StrobjoDataDeserializer extends AbstractDataDeserializer{
 					break;
 				}
 				else{
-					tokenizer.backward();
+					tokenizer.back();
 					DataChunk dc=loadDataChunkValue(tokenizer);
 					if(dc!=null) {
 						values.add(dc);
@@ -119,9 +118,9 @@ public class StrobjoDataDeserializer extends AbstractDataDeserializer{
 		return newchunk;
 	}
 	
-	private DataChunk loadDataChunkValue(IteratorBufferedReader<String> tokenizer) {
+	private DataChunk loadDataChunkValue(SamStream.BufferedSStream<String> tokenizer) {
 		String token;
-		if((token=tokenizer.next())!=null) {
+		if((token=tokenizer.tryNext())!=null) {
 			if(token.equals(openToken)) {
 				logger.info("As object");
 				return loadChunk(tokenizer);

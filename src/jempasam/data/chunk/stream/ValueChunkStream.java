@@ -54,4 +54,9 @@ public class ValueChunkStream<T> implements DataChunkStream<ValueChunk<T>>{
 			if(valuechunk.getValue().equals(value))valuechunk.setValue(value);
 		});
 	}
+	
+	@Override
+	public void reset() {
+		dataChunkIterator.reset();
+	}
 }

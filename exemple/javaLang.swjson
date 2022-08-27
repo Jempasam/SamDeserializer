@@ -1,0 +1,228 @@
+# LOCAL VARIABLE #
+	localVarName:{
+		type: TokenType,
+		then: { tester:ANY, mover:PASS_DOWN, writer:EXIT },
+	},
+	
+	localVarType:{
+		type: TokenType,
+		then: { tester:"^[a-zA-Z_][a-zA-Z0-9_]*$", mover:{moveTo:localVarName}, writer:{name:TOKEN} },
+	},
+# #
+
+# CODE #
+	multilineCode:{
+		type: TokenType,
+		then: { tester:"^\{$", mover:{enterTo:multilineCode}, writer:{subcode:{}} },
+		then: { tester:"^\}$", mover:EXIT, writer:EXIT },
+		then: { tester:ANY, mover:KEEP, writer:{token:TOKEN} },
+	}
+# #
+
+# MEMBER #
+	closeParameter:{type: TokenType},
+	separatorParameter:{type: TokenType},
+	parameterName:{type: TokenType},
+	openParameter:{type: TokenType},
+	memberName:{type: TokenType},
+	
+	closeParameter:{
+		then: { tester:"^\{$", mover:{enterTo:multilineCode}, writer:{code:{}} },
+		then: { tester:ANY, mover:PASS_DOWN, writer:EXIT },
+	},
+	
+	separatorParameter:{
+		then: { tester:"^[a-zA-Z]+$", mover:{moveTo:parameterName,enterTo:localVarType}, writer:{param:{type:TOKEN}} },
+	},
+	
+	parameterName:{
+		then: { tester:"^,$", mover:{moveTo:separatorParameter}, writer:IGNORE },
+		then: { tester:"^\)$", mover:{moveTo:closeParameter}, writer:EXIT },
+	},
+	
+	openParameter:{
+		then: { tester:"^\)$", mover:{moveTo:closeParameter}, writer:EXIT },
+		then: { tester:"^[a-zA-Z]+$", mover:{moveTo:parameterName,enterTo:localVarType}, writer:{param:{type:TOKEN}} },
+	},
+	
+	memberName:{
+		then: { tester:"^\($", mover:{enterTo:openParameter}, writer:{isFunction:true,parameters:{}} },
+		then: { tester:ANY, mover:PASS_DOWN, writer:EXIT },
+	},
+
+	memberType:{
+		type: TokenType,
+		then: { tester:"^[a-zA-Z_][a-zA-Z0-9_]*$", mover:{moveTo:memberName}, writer:{name:TOKEN} },
+	},
+	
+	memberFlag:{type: TokenType},
+	memberContainer:{type: TokenType},
+	
+	memberFlag:{
+		then: { tester:"^final$", mover:{moveTo:memberFlag}, writer:{isFinal:true} },
+		then: { tester:"^static$", mover:{moveTo:memberFlag}, writer:{isStatic:true} },
+		then: { tester:"^abstract$", mover:{moveTo:memberFlag}, writer:{isAbstract:true} },
+		then: { tester:"^default$", mover:{moveTo:memberFlag}, writer:{isDefault:true} },
+		then: { tester:"^(public|private|protected)$", mover:{moveTo:memberFlag}, writer:{visibility:TOKEN} },
+		then: { tester:"^[a-zA-Z]+$", mover:{moveTo:memberType}, writer:{type:TOKEN} },
+	},
+
+	memberContainer:{
+		then: { tester:"^final$", mover:{enterTo:memberFlag}, writer:{member:{isFinal:true}} },
+		then: { tester:"^static$", mover:{enterTo:memberFlag}, writer:{member:{isStatic:true}} },
+		then: { tester:"^abstract$", mover:{enterTo:memberFlag}, writer:{member:{isAbstract:true}} },
+		then: { tester:"^default$", mover:{enterTo:memberFlag}, writer:{member:{isDefault:true}} },
+		then: { tester:"^(public|private|protected)$", mover:{enterTo:memberFlag}, writer:{member:{visibility:TOKEN}} },
+		then: { tester:"^[a-zA-Z]+$", mover:{enterTo:memberType}, writer:{member:{type:TOKEN}} },
+	},
+# #
+
+# CLASS #
+	classInside:{
+		type: TokenType,
+		include: memberContainer,
+		include: classContainer,
+		then: { tester:"^;$", mover:KEEP, writer:IGNORE },
+		then: { tester:"^\}$", mover:EXIT, writer:EXIT },
+	},
+	
+	# IMPLEMENTS #
+		classImplementsSeparator:{type: TokenType},
+		classImplemented:{type: TokenType},
+		classImplements:{type: TokenType},
+		
+		classImplementsSeparator:{
+			then: { tester:"^[a-zA-Z]+$", mover:{moveTo:classImplemented}, writer:{implemented:TOKEN} },
+		},
+
+		classImplemented:{
+			then: { tester:"^,$", mover:{moveTo:classImplementsSeparator}, writer:IGNORE },
+			then: { tester:"^\{$", mover:{moveTo:classInside}, writer:EXIT },
+		},
+
+		classImplements:{
+			then: { tester:"^[a-zA-Z]+$", mover:{moveTo:classImplemented}, writer:{implemented:TOKEN} },
+		},
+	# #
+	
+	# EXTENDS #
+		classExtendsSeparator:{type: TokenType},
+		classExtended:{type: TokenType},
+		classExtends:{type: TokenType},
+		
+		classExtendsSeparator:{
+			then: { tester:"^[a-zA-Z]+$", mover:{moveTo:classExtended}, writer:{extended:TOKEN} },
+		},
+
+		classExtended:{
+			then: { tester:"^,$", mover:{moveTo:classExtendsSeparator}, writer:IGNORE },
+			then: { tester:"^implements$", mover:{moveTo:classImplements}, writer:IGNORE },
+			then: { tester:"^\{$", mover:{moveTo:classInside}, writer:EXIT },
+		},
+
+		classExtends:{
+			then: { tester:"^[a-zA-Z]+$", mover:{moveTo:classExtended}, writer:{extended:TOKEN} },
+		},
+	# #
+
+	className:{
+		type: TokenType,
+		then: { tester:"^extends$", mover:{moveTo:classExtends}, writer:{parents:{}} },
+		then: { tester:"^implements$", mover:{moveTo:classImplements}, writer:{parents:{}} },
+		then: { tester:"^\{$", mover:{moveTo:classInside}, writer:IGNORE },
+	},
+
+	classType:{
+		type: TokenType,
+		then: { tester:"^[a-zA-Z]+$", mover:{moveTo:className}, writer:{name:TOKEN} },
+	},
+
+	classAbstractClass:{
+		type: TokenType,
+		then: { tester:"^class$", mover:{moveTo:classType}, writer:IGNORE },
+	},
+
+	classAbstract:{
+		type: TokenType,
+		then: { tester:"^class$", mover:{moveTo:classAbstractClass}, writer:IGNORE },
+	},
+
+
+	classVisibility:{
+		type: TokenType,
+		then: { tester:"^(interface|class)$", mover:{moveTo:classType}, writer:{type:TOKEN} },
+		then: { tester:"^abstract$", mover:{moveTo:classAbstract}, writer:{abstract:true} },
+	},
+
+	classContainer:{
+		type: TokenType,
+		then: { tester:"^public$", mover:{enterTo:classVisibility}, writer:{class:{visibility:TOKEN}} },
+		then: { tester:"^(interface|class)$", mover:{moveTo:classType}, writer:{class:{type:TOKEN}} },
+		then: { tester:"^abstract$", mover:{moveTo:classAbstract}, writer:{class:{type:TOKEN}} },
+	},
+# #
+
+
+# PACKAGE #
+packageToken:{type:TokenType},
+packagePathPart:{type:TokenType},
+packagePathSeparator:{type:TokenType},
+
+packagePathSeparator:{
+	then: { tester:"^[a-zA-Z][a-zA-Z0-9]*$", mover:{moveTo:packagePathPart}, writer:{pathpart:TOKEN} },
+},
+
+packagePathPart:{
+	then: { tester:"^\.$", mover:{moveTo:packagePathSeparator}, writer:IGNORE },
+	then: { tester:ANY, mover:PASS_DOWN, writer:EXIT },
+},
+
+packageToken:{
+	then: { tester:"^[a-zA-Z][a-zA-Z0-9]*$", mover:{moveTo:packagePathPart}, writer:{pathpart:TOKEN} },
+},
+
+packageContainer:{
+	type: TokenType,
+	then: { tester:"^package$", mover:{enterTo:packageToken}, writer:{package:{}} },
+},
+
+
+# IMPORT #
+importSeparator:{type:TokenType},
+importPathPart:{type:TokenType},
+importPathStar:{type:TokenType},
+
+importSeparator:{
+	then: { tester:"^[a-zA-Z][a-zA-Z0-9]*$", mover:{moveTo:importPathPart}, writer:{pathpart:TOKEN} },
+	then: { tester:"^\*$", mover:{moveTo:importPathStar}, writer:{pathpart:TOKEN} },
+},
+
+importPathPart:{
+	then: { tester:"^\.$", mover:{moveTo:importSeparator}, writer:IGNORE },
+	then: { tester:ANY, mover:PASS_DOWN, writer:EXIT },
+},
+
+importPathStar:{
+	then: { tester:ANY, mover:PASS_DOWN, writer:EXIT },
+},
+
+importToken:{
+	type: TokenType,
+	then: { tester:"^[a-zA-Z][a-zA-Z0-9]*$", mover:{moveTo:importPathPart}, writer:{pathpart:TOKEN} },
+},
+
+importContainer:{
+	type: TokenType,
+	then: { tester:"^import$", mover:{enterTo:importToken}, writer:{import:{}} },
+},
+
+
+
+filestart:{
+	type: TokenType,
+	include: packageContainer,
+	include: importContainer,
+	include: classContainer,
+	then: { tester:"^;$", mover:KEEP, writer:IGNORE },
+	then: { tester:END_OF_FILE, mover:KEEP, writer:IGNORE },
+},

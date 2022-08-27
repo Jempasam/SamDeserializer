@@ -39,5 +39,10 @@ public class ObjectChunkStream implements DataChunkStream<ObjectChunk> {
 		return decorator.actualParent();
 	}
 	
+	@Override
+	public void reset() {
+		decorator.reset();
+	}
+	
 	
 }

@@ -6,22 +6,34 @@ import java.util.function.Function;
 
 public class SimpleValueParser implements ValueParser{
 	
-	private Map<Class<?>,Function<String,? extends Object>> parsers;
+	private Map<Class<?>, Map<Class<?>, Function<? extends Object, ? extends Object>>> parsers;
 	
 	public SimpleValueParser() {
 		parsers=new HashMap<>();
 	}
 
+	
 	@SuppressWarnings("unchecked")
-	@Override
-	public <T> T parse(Class<T> type, String string) {
-		Function<String,? extends Object> parser=parsers.get(type);
-		if(parser==null)return null;
-		else return (T)parser.apply(string);
+	public <F,T> T parse(Class<T> to, F converted) {
+		Map<Class<?>, Function<? extends Object, ? extends Object>> fromToConverterMap=parsers.get(to);
+		if(fromToConverterMap!=null) {
+			for(Map.Entry<Class<? extends Object>, Function<? extends Object, ? extends Object>> entry : fromToConverterMap.entrySet()) {
+				if(entry.getKey().isAssignableFrom(converted.getClass())) {
+					return ((Function<F,T>)entry.getValue()).apply(converted);
+				}
+			}
+		}
+		return null;
 	}
 	
-	public <T> void add(Class<T> type, Function<String,T> serializer) {
-		parsers.put(type, serializer);
+	public <F,T> void add(Class<F> from, Class<T> to, Function<F,T> serializer) {
+		Map<Class<?>, Function<? extends Object, ? extends Object>> fromToConverterMap=parsers.get(to);
+		if(fromToConverterMap==null) {
+			fromToConverterMap=new HashMap<>();
+			parsers.put(to, fromToConverterMap);
+		}
+		
+		fromToConverterMap.put(from, serializer);
 	}
 
 }

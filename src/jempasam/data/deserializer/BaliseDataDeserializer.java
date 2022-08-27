@@ -4,14 +4,15 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import jempasam.data.chunk.DataChunk;
 import jempasam.data.chunk.ObjectChunk;
 import jempasam.data.chunk.SimpleObjectChunk;
 import jempasam.data.chunk.value.StringChunk;
 import jempasam.logger.SLogger;
-import jempasam.textanalyzis.reader.IteratorBufferedReader;
-import jempasam.textanalyzis.tokenizer.Tokenizer;
+import jempasam.samstream.stream.SamStream;
+import jempasam.samstream.stream.SamStream.BufferedSStream;
 
 public class BaliseDataDeserializer extends AbstractDataDeserializer{
 	
@@ -42,7 +43,7 @@ public class BaliseDataDeserializer extends AbstractDataDeserializer{
 	
 	
 	
-	public BaliseDataDeserializer(Function<InputStream, Tokenizer> tokenizerSupplier, SLogger logger) {
+	public BaliseDataDeserializer(Function<InputStream, SamStream<String>> tokenizerSupplier, SLogger logger) {
 		super(logger,tokenizerSupplier);
 	}
 	
@@ -50,14 +51,14 @@ public class BaliseDataDeserializer extends AbstractDataDeserializer{
 	
 	@Override
 	public ObjectChunk loadFrom(InputStream i) {
-		IteratorBufferedReader<String> input=new IteratorBufferedReader<>(tokenizerSupplier.apply(i), new String[5]);
+		BufferedSStream<String> input=tokenizerSupplier.apply(i).buffered(10);
 		ObjectChunk ret=loadObject(input);
 		ret.setName("root");
 		return ret;
 	}
 	
-	private ObjectChunk loadObject(IteratorBufferedReader<String> input) {
-		logger.enter("new object");
+	private ObjectChunk loadObject(BufferedSStream<String> input) {
+		logger.enter().debug("new object");
 		String token=null;
 		ObjectChunk ret=new SimpleObjectChunk(null);
 		//Each parameter
@@ -68,9 +69,9 @@ public class BaliseDataDeserializer extends AbstractDataDeserializer{
 			List<DataChunk> values=new ArrayList<>();
 			
 			//Load valueparameters
-			logger.enter("New parameter");
+			logger.enter().debug("New parameter");
 			paramload:{
-				while(input.hasNext() && !(token=input.next()).equals(assignementToken)) {
+				while(input.hasNext() && !(token=input.tryNext()).equals(assignementToken)) {
 					if(token.equals(closeBaliseToken)) {
 						inparam=false;
 						break paramload;
@@ -79,10 +80,10 @@ public class BaliseDataDeserializer extends AbstractDataDeserializer{
 						break paramload;
 					}
 					else if(token.equals(endBaliseToken)){
-						token=input.next();
+						token=input.tryNext();
 						if(!token.equals(closeBaliseToken)) {
 							if(!permissive)logger.info("Miss a closingToken after endBaliseToken in opening balise");
-							input.backward();
+							input.back();
 						}
 						hasmember=false;
 						inparam=false;
@@ -92,7 +93,7 @@ public class BaliseDataDeserializer extends AbstractDataDeserializer{
 					else names.add(token);
 				}
 				
-				while(input.hasNext() && !(token=input.next()).equals(separatorToken)) {
+				while(input.hasNext() && !(token=input.tryNext()).equals(separatorToken)) {
 					if(token.equals(closeBaliseToken)){
 						inparam=false;
 						break paramload;
@@ -101,10 +102,10 @@ public class BaliseDataDeserializer extends AbstractDataDeserializer{
 						break paramload;
 					}
 					else if(token.equals(endBaliseToken)){
-						token=input.next();
+						token=input.tryNext();
 						if(!token.equals(closeBaliseToken)) {
 							if(!permissive)logger.info("Miss a closingBaliseToken after endBaliseToken in opening balise");
-							input.backward();
+							input.back();
 						}
 						hasmember=false;
 						inparam=false;
@@ -118,21 +119,21 @@ public class BaliseDataDeserializer extends AbstractDataDeserializer{
 			logger.exit();
 		}
 		while(hasmember&&input.hasNext()) {
-			token=input.next();
+			token=input.tryNext();
 			if(!token.equals(openBaliseToken)) {
 				logger.info("Invalid token \""+token+"\" should be an openBaliseToken");
 			}
 			else if(input.next().equals(endBaliseToken)){
-				token=input.next();
+				token=input.tryNext();
 				if(!token.equals(closeBaliseToken)) {
 					if(!permissive)logger.info("Miss a closingBaliseToken after endBaliseToken in opening balise");
-					input.backward();
+					input.back();
 				}
 				break;
 			}
 			else {
-				input.backward();
-				String name=input.next();
+				input.back();
+				String name=input.tryNext();
 				ObjectChunk objectchunk=loadObject(input);
 				objectchunk.setName(name);
 				ret.add(objectchunk);

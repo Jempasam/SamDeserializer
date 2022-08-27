@@ -4,22 +4,23 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import jempasam.data.chunk.DataChunk;
 import jempasam.data.chunk.value.StringChunk;
 import jempasam.logger.SLogger;
-import jempasam.textanalyzis.tokenizer.Tokenizer;
+import jempasam.samstream.stream.SamStream;
 
 public abstract class AbstractDataDeserializer implements DataDeserializer{
 	
 	
 	
 	protected SLogger logger;
-	protected Function<InputStream, Tokenizer> tokenizerSupplier;
+	protected Function<InputStream, SamStream<String>> tokenizerSupplier;
 	
 	
 	
-	protected AbstractDataDeserializer(SLogger logger, Function<InputStream, Tokenizer> tokenizerSupplier) {
+	protected AbstractDataDeserializer(SLogger logger, Function<InputStream, SamStream<String>> tokenizerSupplier) {
 		super();
 		this.logger = logger;
 		this.tokenizerSupplier = tokenizerSupplier;

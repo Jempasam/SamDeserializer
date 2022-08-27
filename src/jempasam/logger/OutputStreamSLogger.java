@@ -25,16 +25,9 @@ public class OutputStreamSLogger implements SLogger{
 	}
 
 	@Override
-	public void enter(String name) {
-		try {
-			output.write(prefix.getBytes());
-			output.write("In ".getBytes());
-			output.write(name.getBytes());
-			output.write(":\n".getBytes());
-			setlevel(level+1);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public SLogger enter() {
+		setlevel(level+1);
+		return this;
 	}
 
 	@Override
@@ -45,7 +38,8 @@ public class OutputStreamSLogger implements SLogger{
 	private void setlevel(int a) {
 		level=a;
 		StringBuilder sb=new StringBuilder();
-		for(int i=0; i<level; i++)sb.append("-> ");
+		for(int i=0; i<level; i++)sb.append(" ->");
+		sb.append("|");
 		prefix=sb.toString();
 	}
 

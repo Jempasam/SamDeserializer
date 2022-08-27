@@ -13,7 +13,7 @@ public interface SLogger {
 	
 	
 	void log(String message, int level);
-	void enter(String name);
+	SLogger enter();
 	void exit();
 	
 	

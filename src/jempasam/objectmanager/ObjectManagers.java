@@ -1,11 +1,5 @@
 package jempasam.objectmanager;
 
-import jempasam.data.deserializer.StrobjoDataDeserializer;
-import jempasam.data.loader.ObjectLoader;
-import jempasam.logger.SLogger;
-import jempasam.logger.OutputStreamSLogger;
-import jempasam.textanalyzis.tokenizer.impl.InputStreamSimpleTokenizer;
-
 public class ObjectManagers {
 	/*public static <T> ObjectLoader<T> createLoader(ObjectManager<T> manager, Class<T> type, String prefix, String name){
 		ObjectLoader<T> newproto=null;

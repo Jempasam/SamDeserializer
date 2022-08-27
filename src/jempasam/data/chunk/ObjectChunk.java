@@ -95,4 +95,6 @@ public interface ObjectChunk extends DataChunk, Streamable<DataChunk>{
 		return values;
 	}
 	
+	@Override ObjectChunk clone() throws CloneNotSupportedException;
+	
 }

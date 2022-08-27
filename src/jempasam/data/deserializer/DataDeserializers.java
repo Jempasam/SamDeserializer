@@ -8,31 +8,28 @@ import java.util.HashMap;
 
 import jempasam.data.modifier.TemplateDataModifier;
 import jempasam.logger.SLogger;
-import jempasam.textanalyzis.tokenizer.impl.InputStreamSimpleTokenizer;
+import jempasam.samstream.text.TokenizerConfig;
+import jempasam.samstream.text.TokenizerSStream;
 
 public class DataDeserializers {
 	
 	public static DataDeserializer createStrobjoDS(SLogger logger) {
-		StrobjoDataDeserializer ret=new StrobjoDataDeserializer(
-				(i)->{
-					InputStreamSimpleTokenizer r=new InputStreamSimpleTokenizer(i," \n\r\t","():,","\"'");
-					r.setComment("#");
-					return r;
-				},
-				logger
-				);
+		TokenizerConfig config=new TokenizerConfig();
+		config.cutChars=" \n\r\t";
+		config.uniqueChars=":(),";
+		config.escapeAroundChars="\"'";
+		config.commentChars="#";
+		StrobjoDataDeserializer ret=new StrobjoDataDeserializer( (i)->new TokenizerSStream(i, config), logger );
 		return ret;
 	}
 	
 	public static DataDeserializer createJSONLikeStrobjoDS(SLogger logger) {
-		StrobjoDataDeserializer ret=new StrobjoDataDeserializer(
-				(i)->{
-					InputStreamSimpleTokenizer r=new InputStreamSimpleTokenizer(i," \n\r\t","{}:,","\"'");
-					r.setComment("#");
-					return r;
-				},
-				logger
-				);
+		TokenizerConfig config=new TokenizerConfig();
+		config.cutChars=" \n\r\t";
+		config.uniqueChars=":{},";
+		config.escapeAroundChars="\"'";
+		config.commentChars="#";
+		StrobjoDataDeserializer ret=new StrobjoDataDeserializer( (i)->new TokenizerSStream(i, config), logger );
 		ret.setCloseToken("}");
 		ret.setOpenToken("{");
 		ret.setSeparatorToken(",");
@@ -41,26 +38,22 @@ public class DataDeserializers {
 	}
 	
 	public static DataDeserializer createSGMLLikeBaliseDS(SLogger logger) {
-		BaliseDataDeserializer ret=new BaliseDataDeserializer(
-				(i)->{
-					InputStreamSimpleTokenizer r=new InputStreamSimpleTokenizer(i," \n\r\t","<>=;/","\"'");
-					r.setComment("#");
-					return r;
-				},
-				logger
-				);
+		TokenizerConfig config=new TokenizerConfig();
+		config.cutChars=" \n\r\t";
+		config.uniqueChars="<>=;/";
+		config.escapeAroundChars="\"'";
+		config.commentChars="#";
+		BaliseDataDeserializer ret=new BaliseDataDeserializer( (i)->new TokenizerSStream(i, config), logger );
 		return ret;
 	}
 	
 	public static DataDeserializer createBoxLikeBaliseDS(SLogger logger) {
-		BaliseDataDeserializer ret=new BaliseDataDeserializer(
-				(i)->{
-					InputStreamSimpleTokenizer r=new InputStreamSimpleTokenizer(i," \n\r\t","[:=,]","\"'");
-					r.setComment("#");
-					return r;
-				},
-				logger
-				);
+		TokenizerConfig config=new TokenizerConfig();
+		config.cutChars=" \n\r\t";
+		config.uniqueChars="[:=,]";
+		config.escapeAroundChars="\"'";
+		config.commentChars="#";
+		BaliseDataDeserializer ret=new BaliseDataDeserializer( (i)->new TokenizerSStream(i, config), logger );
 		ret.setPermissive(true);
 		ret.setSeparatorToken(",");
 		ret.setCloseBaliseToken(":");
@@ -70,14 +63,12 @@ public class DataDeserializers {
 	}
 	
 	public static DataDeserializer createStructLikeStrobjoDS(SLogger logger) {
-		StrobjoDataDeserializer ret=new StrobjoDataDeserializer(
-				(i)->{
-					InputStreamSimpleTokenizer r=new InputStreamSimpleTokenizer(i," \n\r\t","{}=;","\"'");
-					r.setComment("#");
-					return r;
-				},
-				logger
-				);
+		TokenizerConfig config=new TokenizerConfig();
+		config.cutChars=" \n\r\t";
+		config.uniqueChars="{}=;";
+		config.escapeAroundChars="\"'";
+		config.commentChars="#";
+		StrobjoDataDeserializer ret=new StrobjoDataDeserializer( (i)->new TokenizerSStream(i, config), logger );
 		ret.setCloseToken("}");
 		ret.setOpenToken("{");
 		ret.setSeparatorToken(";");
