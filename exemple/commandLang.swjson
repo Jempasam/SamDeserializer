@@ -1,0 +1,182 @@
+predicates:{
+	variableName: "^[a-zA-Z_][a-zA-Z_0-9]*$",
+	functionName: "^[a-zA-Z_][a-zA-Z_0-9]*$",
+	memberAccessName: "^([a-zA-Z_0-9]\:)?[a-zA-Z_0-9\/]+$",
+},
+
+tokens:{
+	codeContainer:{},
+	macroContainer:{},
+	functionContainer:{},
+	importContainer:{},
+	constContainer:{},
+	namespaceContainer:{},
+	codeLine:{},
+	multilineCode:{},
+	# MACROS #
+		macroClose:{
+			then: { tester:ANY, mover:PASS_DOWN, writer:EXIT },
+		},
+		
+		# PARAMETERS #
+			macroCloseParameter:{},
+			macroParameterSeparator:{},
+			macroParameterName:{},
+			macroOpenParameter:{},
+			
+			macroCloseParameter:{
+				then: { tester:"^\($", mover:{moveTo:macroClose,enterTo:multilineCode}, writer:{code:{}} },
+			},
+			
+			macroParameterSeparator:{
+				then: { tester:"^\)$", mover:{moveTo:macroCloseParameter}, writer:EXIT },
+				then: { tester:variableName, mover:{moveTo:macroParameterName}, writer:{TOKEN} },
+			},
+			
+			macroParameterName:{
+				then: { tester:"^\)$", mover:{moveTo:macroCloseParameter}, writer:EXIT },
+				then: { tester:"^\,$", mover:{moveTo:macroParameterSeparator}, writer:IGNORE },
+			},
+			
+			macroOpenParameter:{
+				then: { tester:"^\)$", mover:{moveTo:macroCloseParameter}, writer:EXIT },
+				then: { tester:variableName, mover:{moveTo:macroParameterName}, writer:{TOKEN} },
+			},
+		# #
+		
+		macroName:{
+			then: { tester:"^\($", mover:{moveTo:macroOpenParameter}, writer:{parameters:{}} },
+		},
+		
+		macroToken:{
+			then: { tester:functionName, mover:{moveTo:macroName}, writer:{name:TOKEN} },
+		},
+		
+		macroContainer:{
+			then: { tester:"^macro$", mover:{enterTo:macroToken}, writer:{macro:{}} },
+		},
+	# #
+
+
+	# FUNCTIONS #
+		functionClose:{
+			then: { tester:ANY, mover:PASS_DOWN, writer:EXIT },
+		},
+		
+		functionName:{
+			then: { tester:"^\($", mover:{moveTo:functionClose,enterTo:multilineCode}, writer:{code:{}} },
+		},
+		
+		functionToken:{
+			include: functionName,
+			then: { tester:functionName, mover:{moveTo:functionName}, writer:{name:TOKEN} },
+		},
+		
+		functionContainer:{
+			then: { tester:"^define$", mover:{enterTo:functionToken}, writer:{function:{}} },
+		},
+	# #
+	
+	# CODE #
+		# LINE #
+			codeLineInside:{
+				then: { tester:"^\($", mover:{enterTo:codeLineInside}, writer:{TOKEN} },
+				then: { tester:"^\)$", mover:EXIT, writer:{TOKEN} },
+				include: functionContainer,
+				then: { tester:ANY, mover:KEEP, writer:{TOKEN} },
+			},
+			codeLine:{
+				then: { tester:"^\($", mover:{enterTo:codeLineInside}, writer:{TOKEN} },
+				then: { tester:"^\)$", mover:EXIT, writer:{TOKEN} },
+				then: { tester:"^\;$", mover:EXIT, writer:EXIT },
+				include: functionContainer,
+				then: { tester:ANY, mover:KEEP, writer:{TOKEN} },
+			},
+		# #
+		
+		# MULTILINE #
+			multilineCode:{
+				then: { tester:"^\)$", mover:EXIT, writer:EXIT },
+				then: { tester:ANY, mover:{enterTo:codeLine}, writer:{line:{TOKEN}} },
+			},
+		# #
+		codeContainer:{
+			then: { tester:ANY, mover:{enterTo:codeLine}, writer:{line:{TOKEN}} },
+		},
+	# #
+
+
+	# IMPORT #
+		importPath:{
+			then: { tester:";", mover:EXIT, writer:EXIT },
+		},
+		
+		importToken:{
+			then: { tester:memberAccessName, mover:{moveTo:importPath}, writer:{path:TOKEN} },
+		},
+		
+		importContainer:{
+			then: { tester:"^import$", mover:{enterTo:importToken}, writer:{import:{}} },
+		},
+	# #
+
+
+	# CONSTANTES #
+		constValue:{
+			then: { tester:"^\;$", mover:EXIT, writer:EXIT },
+		},
+		
+		constEqual:{
+			then: { tester:ANY, mover:{moveTo:constValue}, writer:{value:TOKEN} },
+		},
+		
+		constName:{
+			then: { tester:"^\=$", mover:{moveTo:constEqual}, writer:IGNORE },
+		},
+		
+		constToken:{
+			then: { tester:variableName, mover:{moveTo:constName}, writer:{name:TOKEN} },
+		},
+		
+		constContainer:{
+			then: { tester:"^const$", mover:{enterTo:constToken}, writer:{const:{}} },
+		},
+	# #
+
+
+	# NAMESPACE #
+		namespaceInside:{
+			then: { tester:"^\)$", mover:EXIT, writer:EXIT },
+			include: functionContainer,
+			include: macroContainer,
+			include: importContainer,
+			include: constContainer,
+			include: namespaceContainer,
+		},
+		
+		namespaceName:{
+			then: { tester:"^\($", mover:{moveTo:namespaceInside}, writer:IGNORE },
+		},
+		
+		namespaceToken:{
+			then: { tester:"^[a-zA-Z_0-9\/]+$", mover:{moveTo:namespaceName}, writer:{name:TOKEN} },
+		},
+		
+		namespaceContainer:{
+			then: { tester:"^namespace$", mover:{enterTo:namespaceToken}, writer:{namespace:{}} },
+		},
+	# #
+
+	linestart:{
+		then: { tester:END_OF_FILE, mover:KEEP, writer:IGNORE },
+		include: functionContainer,
+		include: macroContainer,
+		include: importContainer,
+		include: constContainer,
+		include: namespaceContainer,
+	},
+
+	filestart:{
+		include: linestart,
+	},
+}

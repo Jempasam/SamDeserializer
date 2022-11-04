@@ -1,5 +1,7 @@
 package jempasam.data.chunk.stream;
 
+import java.util.function.Consumer;
+
 import jempasam.data.chunk.DataChunk;
 import jempasam.data.chunk.ObjectChunk;
 
@@ -46,5 +48,11 @@ public class ChildChunkStream implements DataChunkStream<DataChunk>{
 	@Override
 	public ObjectChunk actualParent() {
 		return target;
+	}
+
+	@Override
+	public synchronized void syncNext(Consumer<DataChunk> action) {
+		DataChunk v=tryNext();
+		if(hasSucceed())action.accept(v);
 	}
 }

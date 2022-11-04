@@ -29,15 +29,21 @@ public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 	
 	private Class<T> baseClass;
 	private String prefixe;
+	private String suffixe;
 	
 	
 	
-	public SimpleObjectLoader(SLogger logger, ValueParser valueParser, Class<T> baseClass, String prefixe) {
+	public SimpleObjectLoader(SLogger logger, ValueParser valueParser, Class<T> baseClass, String prefixe, String suffixe) {
 		super();
 		this.logger = logger;
 		this.valueParser = valueParser;
 		this.baseClass = baseClass;
 		this.prefixe = prefixe;
+		this.suffixe = suffixe;
+	}
+	
+	public SimpleObjectLoader(SLogger logger, ValueParser valueParser, Class<T> baseClass, String prefixe) {
+		this(logger,valueParser,baseClass,prefixe,"");
 	}
 	
 	
@@ -56,9 +62,21 @@ public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 				}
 				if(o!=null) {
 					hydrateObject(o, od, excluded);
-					logger.info("RESULT: registred");
+					logger.debug("RESULT: registred");
 				}
-				else logger.info("RESULT: Ignored");
+				else logger.debug("RESULT: Ignored");
+			}
+			else if(d instanceof ValueChunk<?>) {
+				ValueChunk<?> valuechunk=(StringChunk)d;
+				
+				//Try to parse
+				Object value=valuechunk.getValue();
+				Object parsed=valueParser.parse(baseClass, value);
+				if(parsed!=null) {
+					logger.debug("RESULT: parsed");
+					manager.register(d.getName(), (T)parsed);
+				}
+				else logger.debug("RESULT: Ignored"); 
 			}
 			logger.exit();
 		}
@@ -90,7 +108,7 @@ public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 			newobject=createObjectEmptyOfClass(objectclass, data, excluded);
 			excluded.add("type");
 			if(newobject==null) throw new ClassNotFoundException();
-			logger.debug("Instantiate as "+objectclass.getName());
+			logger.debug("Instantiated as "+objectclass.getName());
 			return newobject;
 		}catch (ClassNotFoundException e) {
 			logger.debug("Cannot instantiate");
@@ -188,10 +206,10 @@ public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 			Object value=valuechunk.getValue();
 			Object parsed=valueParser.parse(type, value);
 			if(parsed!=null) {
-				logger.info("Parameter registred as \""+valuechunk.getName()+"\"=\""+valuechunk.getValue()+"\"");
+				logger.debug("Parameter registred as \""+valuechunk.getName()+"\"=\""+valuechunk.getValue()+"\"");
 				ret=parsed;
 			}
-			else logger.info("Parameter \""+valuechunk.getName()+"\" is of unparseable type. Replace string value by an object value.");
+			else logger.debug("Parameter \""+valuechunk.getName()+"\" is of unparseable type. Replace string value by an object value.");
 		}
 		else if(datachunk instanceof ObjectChunk){
 			ObjectChunk objectchunk=(ObjectChunk)datachunk;
@@ -201,14 +219,14 @@ public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 			if(parsed!=null) {
 				ret=parsed;
 			}
-			else if(type.isPrimitive() || type==String.class) logger.info("This parameter should be primitive not an object. Replace object value by string value.");
+			else if(type.isPrimitive() || type==String.class) logger.debug("This parameter should be primitive not an object. Replace object value by string value.");
 			else {
 				Object obj=createObject(objectchunk, type);
-				if(obj==null) logger.info("Invalid object parameter");
+				if(obj==null) logger.debug("Invalid object parameter");
 				else ret=obj;
 			}
 		}
-		else logger.info("A parameter should be of type ObjectChunk or ValueChunk.");
+		else logger.debug("A parameter should be of type ObjectChunk or ValueChunk.");
 		logger.exit();
 		return ret;
 	}
@@ -274,7 +292,7 @@ public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 
 			//Get the type by name
 			try {
-				type=loader.loadClass(prefixe+classname);
+				type=loader.loadClass(prefixe+classname+suffixe);
 			}catch(ClassNotFoundException e) {
 				try {
 					type=loader.loadClass(classname);
@@ -297,7 +315,6 @@ public class SimpleObjectLoader<T> implements ObjectLoader<T>{
 	
 	@Override
 	protected Object clone() throws CloneNotSupportedException {
-		// TODO Auto-generated method stub
 		return super.clone();
 	}
 

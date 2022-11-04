@@ -47,6 +47,7 @@ public class TokenType {
 	}
 	
 	public String getRepresentation() {
+		System.out.println(then);
 		return then.stream().map(TokenAnalyzer::getRepresentation).collect(Collectors.joining(" or "));
 	}
 	

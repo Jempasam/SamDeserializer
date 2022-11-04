@@ -37,6 +37,49 @@ public class DataDeserializers {
 		return ret;
 	}
 	
+	public static DataDeserializer createYAMLLikeChardentDS(SLogger logger) {
+		TokenizerConfig config=new TokenizerConfig();
+		config.cutChars=" \r";
+		config.uniqueChars=":\n\t";
+		config.escapeAroundChars="\"'";
+		config.commentChars="#";
+		ChardentDataDeserializer ret=new ChardentDataDeserializer( config::create, logger );
+		ret.setAffectationToken(":");
+		ret.setIndentorToken("\t");
+		ret.setSeparatorToken("\n");
+		return ret;
+	}
+	
+	public static DataDeserializer createIndentedBaliseDS(SLogger logger) {
+		TokenizerConfig config=new TokenizerConfig();
+		config.cutChars=" \r";
+		config.uniqueChars=":\t(),\n";
+		config.escapeAroundChars="\"'";
+		config.commentChars="#";
+		ChardentBaliseDataDeserializer ret=new ChardentBaliseDataDeserializer( config::create, logger );
+		ret.affectationToken=":";
+		ret.openToken="(";
+		ret.closeToken=")";
+		ret.separatorToken=",";
+		ret.indentorToken="\t";
+		return ret;
+	}
+	
+	public static DataDeserializer createSquareIndentedBaliseDS(SLogger logger) {
+		TokenizerConfig config=new TokenizerConfig();
+		config.cutChars=" \r";
+		config.uniqueChars=":\t[],\n";
+		config.escapeAroundChars="\"'";
+		config.commentChars="#";
+		ChardentBaliseDataDeserializer ret=new ChardentBaliseDataDeserializer( config::create, logger );
+		ret.affectationToken=":";
+		ret.openToken="[";
+		ret.closeToken="]";
+		ret.separatorToken=",";
+		ret.indentorToken="\t";
+		return ret;
+	}
+	
 	public static DataDeserializer createSGMLLikeBaliseDS(SLogger logger) {
 		TokenizerConfig config=new TokenizerConfig();
 		config.cutChars=" \n\r\t";

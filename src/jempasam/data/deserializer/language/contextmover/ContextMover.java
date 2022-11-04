@@ -3,48 +3,30 @@ package jempasam.data.deserializer.language.contextmover;
 import java.util.List;
 
 import jempasam.data.deserializer.language.TokenType;
-import jempasam.data.deserializer.language.datawriter.CompositeDataWriter;
 import jempasam.samstream.stream.SamStream;
-import jempasam.samstream.stream.SamStream.BufferedSStream;
 
 public interface ContextMover {
 	TokenType define(List<TokenType> typeStack, SamStream.BufferedSStream<String> tokenizer);
 	
 	public static ContextMover enterTo(TokenType type) {
-		return new HybridContextMover(type,null);
+		return new HybridContextMover(type,null, 0,false);
 	}
 	
 	public static ContextMover moveTo(TokenType type) {
-		return new HybridContextMover(null, type);
+		return new HybridContextMover(null, type, 0,false);
 	}
 	
 	public static ContextMover enterToFrom(TokenType type, TokenType from) {
-		return new HybridContextMover(type, from);
+		return new HybridContextMover(type, from, 0,false);
 	}
 	
-	public static final ContextMover EXIT=new ContextMover() {
-		@Override
-		public TokenType define(List<TokenType> typeStack, BufferedSStream<String> tokenizer) {
-			typeStack.remove(typeStack.size()-1);
-			return null;
-		}
-	};
+	public static final ContextMover EXIT=new HybridContextMover(null,null,1,true);
 	
-	public static final ContextMover KEEP=new ContextMover() {
-		@Override
-		public TokenType define(List<TokenType> typeStack, BufferedSStream<String> tokenizer) {
-			return null;
-		}
-	};
+	public static final ContextMover EXIT2=new HybridContextMover(null,null,2,true);
 	
-	public static final ContextMover PASS_DOWN=new ContextMover() {
-		@Override
-		public TokenType define(List<TokenType> typeStack, BufferedSStream<String> tokenizer) {
-			typeStack.remove(typeStack.size()-1);
-			tokenizer.back();
-			return null;
-		}
-	};
+	public static final ContextMover EXIT3=new HybridContextMover(null,null,3,true);
+	
+	public static final ContextMover KEEP=new HybridContextMover(null,null,0,false);
 	
 	public static Class<?> defaultSubclass(){
 		return HybridContextMover.class;

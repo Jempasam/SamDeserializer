@@ -1,5 +1,7 @@
 package jempasam.data.chunk.stream;
 
+import java.util.function.Consumer;
+
 import jempasam.data.chunk.DataChunk;
 import jempasam.data.chunk.ObjectChunk;
 import jempasam.data.chunk.value.ValueChunk;
@@ -58,5 +60,11 @@ public class ValueChunkStream<T> implements DataChunkStream<ValueChunk<T>>{
 	@Override
 	public void reset() {
 		dataChunkIterator.reset();
+	}
+	
+	@Override
+	public synchronized void syncNext(Consumer<ValueChunk<T>> action) {
+		ValueChunk<T> v=tryNext();
+		if(hasSucceed())action.accept(v);
 	}
 }

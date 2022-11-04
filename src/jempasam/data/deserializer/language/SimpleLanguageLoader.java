@@ -59,11 +59,15 @@ public class SimpleLanguageLoader {
 		valueParser.add(ObjectChunk.class, DataWriter.class, ModelDataWriter::new);
 		
 		tokenPredicateManager.register("ANY", TokenPredicate.ANY);
+		tokenPredicateManager.register("END_OF_FILE", TokenPredicate.regex(Pattern.compile("\\%END_OF_FILE\\%")));
 		dataWriterManager.register("EXIT", DataWriter.EXIT);
+		dataWriterManager.register("EXIT2", DataWriter.EXIT2);
+		dataWriterManager.register("EXIT3", DataWriter.EXIT3);
 		dataWriterManager.register("IGNORE", DataWriter.IGNORE);
 		contextMoverManager.register("EXIT", ContextMover.EXIT);
+		contextMoverManager.register("EXIT2", ContextMover.EXIT2);
+		contextMoverManager.register("EXIT3", ContextMover.EXIT3);
 		contextMoverManager.register("KEEP", ContextMover.KEEP);
-		contextMoverManager.register("PASS_DOWN", ContextMover.PASS_DOWN);
 		
 		// Loaders
 		tokenTypeLoader=new SimpleObjectLoader<>(logger, valueParser, TokenType.class, "jempasam.data.deserializer.language.");
@@ -73,10 +77,10 @@ public class SimpleLanguageLoader {
 	}
 	
 	public void load(ObjectChunk data) {
-		tokenTypeLoader.load(tokenTypeManager, data);
-		tokenPredicateLoader.load(tokenPredicateManager, data);
-		dataWriterLoader.load(dataWriterManager, data);
-		contextMoverLoader.load(contextMoverManager, data);
+		if(data.get("predicates")!=null) tokenPredicateLoader.load(tokenPredicateManager,  (ObjectChunk)data.get("predicates"));
+		if(data.get("writers")!=null) dataWriterLoader.load(dataWriterManager,  (ObjectChunk)data.get("writers"));
+		if(data.get("movers")!=null) contextMoverLoader.load(contextMoverManager,  (ObjectChunk)data.get("movers"));
+		if(data.get("tokens")!=null) tokenTypeLoader.load(tokenTypeManager, (ObjectChunk)data.get("tokens"));
 	}
 
 

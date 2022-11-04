@@ -11,6 +11,7 @@ public interface DataWriter {
 		@Override
 		public void register(String token, List<ObjectChunk> objectStack) {
 		}
+		public String toString() {return "IGNORE";}
 	};
 	
 	public static final DataWriter EXIT=new DataWriter() {
@@ -18,6 +19,26 @@ public interface DataWriter {
 		public void register(String token, List<ObjectChunk> objectStack) {
 			objectStack.remove(objectStack.size()-1);
 		}
+		public String toString() {return "EXIT";}
+	};
+	
+	public static final DataWriter EXIT2=new DataWriter() {
+		@Override
+		public void register(String token, List<ObjectChunk> objectStack) {
+			objectStack.remove(objectStack.size()-1);
+			objectStack.remove(objectStack.size()-1);
+		}
+		public String toString() {return "EXIT2";}
+	};
+	
+	public static final DataWriter EXIT3=new DataWriter() {
+		@Override
+		public void register(String token, List<ObjectChunk> objectStack) {
+			objectStack.remove(objectStack.size()-1);
+			objectStack.remove(objectStack.size()-1);
+			objectStack.remove(objectStack.size()-1);
+		}
+		public String toString() {return "EXIT3";}
 	};
 	
 	public static DataWriter member(String name) {

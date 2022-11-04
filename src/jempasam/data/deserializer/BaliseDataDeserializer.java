@@ -4,8 +4,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Stream;
-
 import jempasam.data.chunk.DataChunk;
 import jempasam.data.chunk.ObjectChunk;
 import jempasam.data.chunk.SimpleObjectChunk;
@@ -82,7 +80,7 @@ public class BaliseDataDeserializer extends AbstractDataDeserializer{
 					else if(token.equals(endBaliseToken)){
 						token=input.tryNext();
 						if(!token.equals(closeBaliseToken)) {
-							if(!permissive)logger.info("Miss a closingToken after endBaliseToken in opening balise");
+							if(!permissive)logger.debug("Miss a closingToken after endBaliseToken in opening balise");
 							input.back();
 						}
 						hasmember=false;
@@ -104,7 +102,7 @@ public class BaliseDataDeserializer extends AbstractDataDeserializer{
 					else if(token.equals(endBaliseToken)){
 						token=input.tryNext();
 						if(!token.equals(closeBaliseToken)) {
-							if(!permissive)logger.info("Miss a closingBaliseToken after endBaliseToken in opening balise");
+							if(!permissive)logger.debug("Miss a closingBaliseToken after endBaliseToken in opening balise");
 							input.back();
 						}
 						hasmember=false;
@@ -121,12 +119,12 @@ public class BaliseDataDeserializer extends AbstractDataDeserializer{
 		while(hasmember&&input.hasNext()) {
 			token=input.tryNext();
 			if(!token.equals(openBaliseToken)) {
-				logger.info("Invalid token \""+token+"\" should be an openBaliseToken");
+				logger.error("Invalid token \""+token+"\" should be an openBaliseToken");
 			}
-			else if(input.next().equals(endBaliseToken)){
+			else if(input.next().get().equals(endBaliseToken)){
 				token=input.tryNext();
 				if(!token.equals(closeBaliseToken)) {
-					if(!permissive)logger.info("Miss a closingBaliseToken after endBaliseToken in opening balise");
+					if(!permissive)logger.debug("Miss a closingBaliseToken after endBaliseToken in opening balise");
 					input.back();
 				}
 				break;

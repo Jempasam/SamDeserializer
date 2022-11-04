@@ -39,57 +39,56 @@ public class ChardentDataDeserializer extends AbstractDataDeserializer {
 	@Override
 	public ObjectChunk loadFrom(InputStream i) {
 		BufferedSStream<String> input=tokenizerSupplier.apply(i).buffered(5);
-		ObjectChunk ret=loadObject(input, countIndent(input));
+		ObjectChunk ret=loadObject(input, 0);
 		ret.setName("root");
 		return ret;
 	}
 	
 	private int countIndent(BufferedSStream<String> input) {
+		if(!input.hasNext())return 0;
 		int i=0;
-		while(input.hasNext() && input.next().equals(indentorToken)) {
+		while(input.hasNext() && input.tryNext().equals(indentorToken)) {
 			i++;
 		}
 		input.back();
-		logger.info("indent "+i);
+		logger.debug("indent "+i);
 		return i;
 	}
 	
 	private ObjectChunk loadObject(BufferedSStream<String> input, int actual_indent) {
 		logger.enter().debug("new Object");
 		
-		ObjectChunk ret=new SimpleObjectChunk(null);
+		ObjectChunk ret=new SimpleObjectChunk("");
 		
 		String token;
-		while( input.hasNext() && !(token=input.tryNext()).equals(separatorToken)) {
-			ret.add(new StringChunk("", token));
-		}
-			
-		int newindent;
-		while(input.hasNext() && (newindent=countIndent(input))>=actual_indent) {
+		int paramindent=actual_indent;
+		while(input.hasNext() && paramindent>=actual_indent) {
 			List<String> names=new ArrayList<>();
 			List<DataChunk> values=new ArrayList<>();
 			try {
-				logger.enter().debug("parameter");
+				logger.enter().debug("parameter indented by "+paramindent);
 				//Load names
 				while(input.hasNext() && !(token=input.tryNext()).equals(affectationToken)) {
 					if(token.equals(separatorToken))throw new Throwable();
 					else names.add(token);
 				}
-				//Load values
-				if(newindent>actual_indent) {
-					logger.info("as Object");
-					values.add(loadObject(input, newindent));
+				logger.debug("names: "+names);
+				
+				//Load string values
+				while(input.hasNext() && !(token=input.tryNext()).equals(separatorToken)) {
+					values.add(new StringChunk("", token));
 				}
-				else {
-					logger.info("as Value");
-					while(input.hasNext() && !(token=input.tryNext()).equals(separatorToken)) {
-						values.add(new StringChunk(null, token));
-					}
+				logger.debug("string values count: "+values.size());
+				
+				// Create object
+				paramindent=countIndent(input);
+				if(paramindent>actual_indent) {
+					logger.debug("as Object");
+					values.add(loadObject(input, paramindent));
 				}
+				createDataChunks(names, values).forEach(ret::add);
+				logger.exit();
 			}catch (Throwable t) { }
-			
-			createDataChunks(names, values).forEach(ret::add);
-			logger.exit();
 		}
 		logger.exit();
 		return ret;

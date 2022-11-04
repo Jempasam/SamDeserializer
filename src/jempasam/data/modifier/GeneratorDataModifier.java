@@ -2,6 +2,7 @@ package jempasam.data.modifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -63,7 +64,7 @@ public class GeneratorDataModifier implements DataModifier{
 	}
 	
 	private DataChunk generateModel(String modelname) {
-		List<DataChunk> chunks=models.get(modelname);
+		List<DataChunk> chunks=(ArrayList<DataChunk>)models.get(modelname);
 		if(chunks.size()==0) {
 			logger.error("Invalid generator model name \""+modelname+"\"");
 			return null;
@@ -112,10 +113,10 @@ public class GeneratorDataModifier implements DataModifier{
 		removelist.forEach(Runnable::run);
 		
 		// Use choices
-		for(List<Choice> choicegroup : choices.values()) {
+		for(Collection<Choice> choicegroup : choices.values()) {
 			int remaining=1;
 			while(choicegroup.size()>0 && remaining>0) {
-				Choice choice=choicegroup.get(random.nextInt(choicegroup.size()));
+				Choice choice=((ArrayList<Choice>)choicegroup).get(random.nextInt(choicegroup.size()));
 				if(choice.id.equals("GLOBAL")) {
 					remaining=1;
 					choicegroup.remove(choice);

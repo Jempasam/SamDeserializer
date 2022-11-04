@@ -1,0 +1,23 @@
+import pord;
+
+const name = tarte;
+
+namespace prout(
+	define tortue(
+		execute as @e run tp ~ ~ ~;
+		positioned 0 ~5 0 run function <bloat>;
+		give @s minecraft:dirt{Id:6,Tab:[{l:"aa"}]} 1 0;
+	)
+)
+
+macro init(text,mob)(
+	say <text>;
+	kill minecraft:<mob>;
+)
+
+define prout(
+	execute as @e run define eas(
+		kill @a;
+		tp ~ ~ ~;
+	);
+)

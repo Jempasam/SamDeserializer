@@ -4,7 +4,6 @@ import java.util.List;
 
 import jempasam.data.chunk.ObjectChunk;
 import jempasam.data.chunk.SimpleObjectChunk;
-import jempasam.data.chunk.value.StringChunk;
 import jempasam.data.loader.tags.Loadable;
 import jempasam.data.loader.tags.LoadableParameter;
 

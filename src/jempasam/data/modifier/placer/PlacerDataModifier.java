@@ -15,7 +15,7 @@ import java.util.function.IntPredicate;
 import java.util.function.IntSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
+import java.util.regex.Pattern;
 
 import jempasam.data.chunk.DataChunk;
 import jempasam.data.chunk.ObjectChunk;
@@ -72,7 +72,7 @@ public class PlacerDataModifier implements DataModifier{
 				StringChunk targetchunk=(StringChunk)datachunk;
 				ObjectChunk parentchunk=stream.actualParent();
 				if(targetchunk.getValue().startsWith(open) && targetchunk.getValue().endsWith(close)) {
-					String parameters[]=targetchunk.getValue().substring(open.length(),targetchunk.getValue().length()-close.length()).split(separator);
+					String parameters[]=targetchunk.getValue().substring(open.length(),targetchunk.getValue().length()-close.length()).split(Pattern.quote(separator));
 					Placement placement=new Placement((toplace)->{
 						int place=parentchunk.find(targetchunk);
 						toplace.setName(targetchunk.getName());
@@ -82,7 +82,7 @@ public class PlacerDataModifier implements DataModifier{
 					removelist.add(()->parentchunk.remove(targetchunk));
 					String group=null;
 					for(String param : parameters) {
-						String infos[]=param.split(separator2);
+						String infos[]=param.split(Pattern.quote(separator2));
 						if(infos.length==2 && infos[0].equals("group"))group=infos[1];
 						else placement.addParameter(infos[0], Arrays.copyOfRange(infos, 1, infos.length));
 					}
@@ -91,7 +91,7 @@ public class PlacerDataModifier implements DataModifier{
 				}
 			}
 		});
-		for(Map.Entry<String, List<Placement>> placement : placements.entrySet()) {
+		for(Map.Entry<String, Collection<Placement>> placement : placements.entrySet()) {
 			for(DataPlacer placer : placers)placer.place(logger, placement.getValue(), placement.getKey());
 			placement.getValue().forEach(p->p.error(logger));
 		}

@@ -32,7 +32,8 @@ public abstract class AbstractValueChunk<T> extends AbstractDataChunk implements
 	@Override
 	public String toString() {
 		StringBuilder sb=new StringBuilder();
-		sb.append("\"").append(getName()).append("\":").append(getValueAsString());
+		if(getName().length()>0)sb.append("\"").append(getName()).append("\":");
+		sb.append(getValueAsString());
 		return sb.toString();
 	}
 	

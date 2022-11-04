@@ -1,3 +1,4 @@
+tokens:{
 # LOCAL VARIABLE #
 	localVarName:{
 		type: TokenType,
@@ -226,3 +227,5 @@ filestart:{
 	then: { tester:"^;$", mover:KEEP, writer:IGNORE },
 	then: { tester:END_OF_FILE, mover:KEEP, writer:IGNORE },
 },
+
+}

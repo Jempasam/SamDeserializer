@@ -8,7 +8,7 @@ import jempasam.samstream.stream.SamStream;
 
 public interface DataChunkStream<T extends DataChunk> extends SamStream<T>{
 	
-	ObjectChunk actualParent();
+	abstract ObjectChunk actualParent();
 	
 	default void rename(String name) {
 		forEach(datachunk->datachunk.setName(name));
@@ -30,6 +30,10 @@ public interface DataChunkStream<T extends DataChunk> extends SamStream<T>{
 	
 	default ObjectChunkStream objects() {
 		return new ObjectChunkStream(this);
+	}
+	
+	default SamStream<T> filterName(String name){
+		return filter(dc->dc.getName().equals(name));
 	}
 	
 	default void numerateSameName(){

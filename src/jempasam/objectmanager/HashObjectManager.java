@@ -37,15 +37,17 @@ public class HashObjectManager<T> implements ObjectManager<T>{
 	public Iterator<Entry<String, T>> iterator() {return content.entrySet().iterator();}
 	
 	@Override
-	public SamStream<Entry<String, T>> stream() { return SamStreams.create(content.entrySet());}
+	public SamStream<Entry<String, T>> stream() {return SamStreams.create(content.entrySet());}
 	
 	@Override
 	public T register(String name, T obj) {
-		T prev=content.get(name);
-		if(prev!=null)reversed.remove(prev);
-		
-		content.put(name, obj);
-		reversed.put(obj, name);
+		if(obj!=null) {
+			T prev=content.get(name);
+			if(prev!=null)reversed.remove(prev);
+			
+			content.put(name, obj);
+			reversed.put(obj, name);
+		}
 		return obj;
 	}
 

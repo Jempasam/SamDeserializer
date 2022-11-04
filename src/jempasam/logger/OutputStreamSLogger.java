@@ -16,6 +16,7 @@ public class OutputStreamSLogger implements SLogger{
 	@Override
 	public void log(String message, int level) {
 		try {
+			output.write(new byte[] {(byte) ('0'+level/100)});
 			output.write(prefix.getBytes());
 			output.write(message.getBytes());
 			output.write("\n".getBytes());

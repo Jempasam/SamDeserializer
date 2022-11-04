@@ -1,22 +1,20 @@
 package jempasam.map;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public class MultiMap<K,V> implements Map<K,List<V>>{
+public class MultiMap<K,V> implements Map<K,Collection<V>>{
 	
 	
 	
-	private Map<K,List<V>> internal;
-	private Supplier<List<V>> listFactory;
+	private Map<K,Collection<V>> internal;
+	private Supplier<Collection<V>> listFactory;
 	
 	
 	
-	public MultiMap(Map<K, List<V>> internal, Supplier<List<V>> listFactory) {
+	public MultiMap(Map<K, Collection<V>> internal, Supplier<Collection<V>> listFactory) {
 		super();
 		this.internal = internal;
 		this.listFactory = listFactory;
@@ -25,8 +23,8 @@ public class MultiMap<K,V> implements Map<K,List<V>>{
 	
 	
 	@SuppressWarnings("unchecked")
-	public List<V> get(Object key) {
-		List<V> list=internal.get(key);
+	public Collection<V> get(Object key) {
+		Collection<V> list=internal.get(key);
 		if(list==null) {
 			list=listFactory.get();
 			internal.put((K)key, list);
@@ -67,17 +65,17 @@ public class MultiMap<K,V> implements Map<K,List<V>>{
 	}
 
 	@Override
-	public List<V> put(K key, List<V> value) {
+	public Collection<V> put(K key, Collection<V> value) {
 		return internal.put(key, value);
 	}
 
 	@Override
-	public List<V> remove(Object key) {
+	public Collection<V> remove(Object key) {
 		return internal.remove(key);
 	}
 
 	@Override
-	public void putAll(Map<? extends K, ? extends List<V>> m) {
+	public void putAll(Map<? extends K, ? extends Collection<V>> m) {
 		internal.putAll(m);
 	}
 
@@ -92,12 +90,12 @@ public class MultiMap<K,V> implements Map<K,List<V>>{
 	}
 
 	@Override
-	public Collection<List<V>> values() {
+	public Collection<Collection<V>> values() {
 		return internal.values();
 	}
 
 	@Override
-	public Set<Entry<K, List<V>>> entrySet() {
+	public Set<Entry<K, Collection<V>>> entrySet() {
 		return internal.entrySet();
 	}
 	

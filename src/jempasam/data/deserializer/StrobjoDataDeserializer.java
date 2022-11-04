@@ -83,7 +83,7 @@ public class StrobjoDataDeserializer extends AbstractDataDeserializer{
 				//ADD NAME
 				else names.add(token);
 			}
-			logger.info("names:"+names);
+			logger.debug("names:"+names);
 			
 			//LOAD VALUES
 			if(!endofobject && !endofparameter)
@@ -113,7 +113,7 @@ public class StrobjoDataDeserializer extends AbstractDataDeserializer{
 			i++;
 			logger.exit();
 		}
-		logger.info("Result: "+newchunk);
+		logger.debug("Result: "+newchunk);
 		logger.exit();
 		return newchunk;
 	}
@@ -122,12 +122,12 @@ public class StrobjoDataDeserializer extends AbstractDataDeserializer{
 		String token;
 		if((token=tokenizer.tryNext())!=null) {
 			if(token.equals(openToken)) {
-				logger.info("As object");
+				logger.debug("As object");
 				return loadChunk(tokenizer);
 			}
 			else{
-				logger.info("As value");
-				logger.info("="+token);
+				logger.debug("As value");
+				logger.debug("="+token);
 				return new StringChunk("", token);
 			}
 		}

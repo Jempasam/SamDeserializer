@@ -38,15 +38,16 @@ public class ModelDataWriter implements DataWriter {
 		tosave.stream().forEach(sc->sc.setValue(token));
 		tosave2.stream().forEach(sc->sc.setName(token));
 		try {
-			for(DataChunk dc : model.childStream()) oldtarget.add(dc.clone());
+			ObjectChunk newtarget=model.clone();
+			for(DataChunk dc : newtarget.childStream())oldtarget.add(dc);
+			ObjectChunk maxtarget=newtarget;
+			while(true) {
+				Optional<ObjectChunk> opt=maxtarget.childStream().objects().last();
+				if(opt.isPresent())maxtarget=opt.get();
+				else break;
+			}
+			if(maxtarget!=newtarget)objectStack.add(maxtarget);
 		}catch (CloneNotSupportedException e) { }
-		ObjectChunk newtarget=oldtarget;
-		while(true) {
-			Optional<ObjectChunk> opt=newtarget.childStream().objects().last();
-			if(opt.isPresent())newtarget=opt.get();
-			else break;
-		}
-		if(oldtarget!=newtarget)objectStack.add(newtarget);
 	}
 	
 	@Override

@@ -2,11 +2,10 @@ package jempasam.data.chunk.stream;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Map;
+import java.util.function.Consumer;
 
 import jempasam.data.chunk.DataChunk;
 import jempasam.data.chunk.ObjectChunk;
-import jempasam.samstream.stream.SamStream;
 
 public class RecursiveChunkStream implements DataChunkStream<DataChunk>{
 	
@@ -73,5 +72,11 @@ public class RecursiveChunkStream implements DataChunkStream<DataChunk>{
 	
 	public ObjectChunk actualParent() {
 		return parent;
+	}
+	
+	@Override
+	public synchronized void syncNext(Consumer<DataChunk> action) {
+		DataChunk v=tryNext();
+		if(hasSucceed())action.accept(v);
 	}
 }

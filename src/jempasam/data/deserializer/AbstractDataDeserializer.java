@@ -4,8 +4,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Stream;
-
 import jempasam.data.chunk.DataChunk;
 import jempasam.data.chunk.value.StringChunk;
 import jempasam.logger.SLogger;
@@ -36,7 +34,7 @@ public abstract class AbstractDataDeserializer implements DataDeserializer{
 		List<DataChunk> ret=new ArrayList<>();
 		
 		if(values.size()==0 && names.size()==0) {
-			logger.info("Values are missing. Parameter is ignored.");
+			logger.debug("Values are missing. Parameter is ignored.");
 		}
 		else {
 			if(names.size()==0) names.add("");

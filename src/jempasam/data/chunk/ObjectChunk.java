@@ -1,12 +1,17 @@
 package jempasam.data.chunk;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import jempasam.data.chunk.stream.ChildChunkStream;
 import jempasam.data.chunk.stream.DataChunkStream;
 import jempasam.data.chunk.stream.RecursiveChunkStream;
 import jempasam.data.chunk.value.ValueChunk;
 import jempasam.samstream.Streamable;
+import jempasam.samstream.collectors.SamCollector;
 
 public interface ObjectChunk extends DataChunk, Streamable<DataChunk>{
 	
@@ -37,6 +42,19 @@ public interface ObjectChunk extends DataChunk, Streamable<DataChunk>{
 		return null;
 	}
 	
+	default DataChunk removeAll(String ...name) {
+		Set<String> toremove=new HashSet<>();
+		Collections.addAll(toremove, name);
+		for(int i=0; i<size(); i++) {
+			DataChunk removed=get(i);
+			if(toremove.contains(removed.getName())) {
+				remove(i);
+				i--;
+			}
+		}
+		return null;
+	}
+	
 	default DataChunk remove(int index) throws IndexOutOfBoundsException{
 		DataChunk d=get(index);
 		remove(d);
@@ -46,8 +64,39 @@ public interface ObjectChunk extends DataChunk, Streamable<DataChunk>{
 	// SIZE
 	int size();
 	
-	// ITERATORS AND STREAMS
+	// GET
+	@SuppressWarnings("unchecked")
+	default <T> ValueChunk<T> get(Class<T> type, String name) {
+		DataChunk ret=get(name);
+		if(ret instanceof ValueChunk && ((ValueChunk<?>)ret).getType().equals(type)) {
+			return (ValueChunk<T>)ret;
+		}
+		else return null;
+	}
 	
+	default <T> Optional<ValueChunk<T>> getOpt(Class<T> type, String name) {
+		DataChunk ret=get(name);
+		if(ret instanceof ValueChunk && ((ValueChunk<?>)ret).getType().equals(type)) {
+			return Optional.of((ValueChunk<T>)ret);
+		}
+		else return Optional.empty();
+	}
+	
+	default <T> T getValue(Class<T> type, String name) {
+		ValueChunk<T> vc=get(type, name);
+		if(vc==null)return null;
+		else return vc.getValue();
+	}
+	
+	default ObjectChunk getObject(String name) {
+		DataChunk ret=get(name);
+		if(ret instanceof ObjectChunk) {
+			return (ObjectChunk)ret;
+		}
+		else return null;
+	}
+	
+	// ITERATORS AND STREAMS
 	@Override
 	default DataChunkStream<DataChunk> stream() {
 		return childStream();
@@ -85,16 +134,26 @@ public interface ObjectChunk extends DataChunk, Streamable<DataChunk>{
 		}
 	}
 	
-	default List<ValueChunk<?>> fillWithValues(String nameprefix, List<ValueChunk<?>> values) {
+	default List<ValueChunk<?>> flatten(String nameprefix, List<ValueChunk<?>> values) {
 		for(DataChunk d : this) {
 			try {
 				if(d instanceof ValueChunk)values.add((ValueChunk<?>)d.clone());
-				else if(d instanceof ObjectChunk)((ObjectChunk) d).fillWithValues(nameprefix+d.getName()+".", values);
+				else if(d instanceof ObjectChunk)((ObjectChunk) d).flatten(nameprefix+d.getName()+".", values);
 			}catch (CloneNotSupportedException e) { }
 		}
 		return values;
 	}
 	
 	@Override ObjectChunk clone() throws CloneNotSupportedException;
+	
+	public static SamCollector<DataChunk, ObjectChunk, ObjectChunk> collector(String name){
+		return new SamCollector<DataChunk, ObjectChunk, ObjectChunk>() {
+			private ObjectChunk obj=new SimpleObjectChunk(name);
+			@Override public int countIngredient() { return obj.size(); }
+			@Override public ObjectChunk getResult() { return obj; }
+			@Override public ObjectChunk getState() { return obj; }
+			@Override public void give(DataChunk ingredient) { obj.add(ingredient); }
+		};
+	}
 	
 }
